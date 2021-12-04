@@ -140,4 +140,31 @@ func main() {
 		}
 	}
 	fmt.Println("Part 1:", winningBoard.getSumUnmarkedNums()*winningNumber)
+
+	// Part 2
+	boards = make([]board, 0)
+	for i := 1; i < len(raw); i++ {
+		boards = append(boards, makeBoard(raw[i]))
+	}
+	losingBoardIndexes := make(map[int]bool)
+	for i := range boards {
+		losingBoardIndexes[i] = true
+	}
+	for _, calledNumber := range calledNumbers {
+		for boardNum, b := range boards {
+			if !losingBoardIndexes[boardNum] {
+				continue
+			}
+			b.mark(calledNumber)
+			if b.isWin() {
+				delete(losingBoardIndexes, boardNum)
+				if len(losingBoardIndexes) == 0 {
+					fmt.Println("Last board lost on number:", calledNumber)
+					fmt.Println("Part 2:", calledNumber*b.getSumUnmarkedNums())
+					return
+				}
+			}
+		}
+	}
+	panic("Didn't find a last winning board")
 }
