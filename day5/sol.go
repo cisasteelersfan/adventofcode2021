@@ -23,15 +23,31 @@ func (l line) isHorizVert() bool {
 func (l line) getPoints() []point {
 	ans := make([]point, 0)
 	if l.x1 == l.x2 {
-		for y := l.y1; y <= l.y2; y++ {
+		start, end := l.y1, l.y2
+		if end < start {
+			start, end = end, start
+		}
+		for y := start; y <= end; y++ {
 			ans = append(ans, point{l.x1, y})
 		}
 	} else if l.y1 == l.y2 {
-		for x := l.x1; x <= l.x2; x++ {
+		start, end := l.x1, l.x2
+		if end < start {
+			start, end = end, start
+		}
+		for x := start; x <= end; x++ {
 			ans = append(ans, point{x, l.y1})
 		}
 	} else {
-		panic("not horizontal line, couldn't get points.")
+		if l.y1 < l.y2 {
+			for x := l.x1; x <= l.x2; x++ {
+				ans = append(ans, point{x, l.y1 + (x - l.x1)})
+			}
+		} else {
+			for x := l.x1; x <= l.x2; x++ {
+				ans = append(ans, point{x, l.y1 - (x - l.x1)})
+			}
+		}
 	}
 	return ans
 }
@@ -45,10 +61,7 @@ func parseLine(s string) line {
 	x2, _ := strconv.Atoi(second[0])
 	y2, _ := strconv.Atoi(second[1])
 	if x2 < x1 {
-		x1, x2 = x2, x1
-	}
-	if y2 < y1 {
-		y1, y2 = y2, y1
+		x1, y1, x2, y2 = x2, y2, x1, y1
 	}
 	return line{x1, y1, x2, y2}
 }
@@ -78,4 +91,18 @@ func main() {
 		}
 	}
 	fmt.Println("Part 1:", numPointsOverlapping)
+
+	points = make(map[point]int)
+	for _, l := range lines {
+		for _, p := range l.getPoints() {
+			points[p]++
+		}
+	}
+	numPointsOverlapping = 0
+	for _, val := range points {
+		if val > 1 {
+			numPointsOverlapping++
+		}
+	}
+	fmt.Println("Part 2:", numPointsOverlapping)
 }
