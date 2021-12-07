@@ -33,6 +33,14 @@ func getFuelCost(arr []int, pos int) int {
 	return cost
 }
 
+func getFuelPart2(arr []int, pos int) int {
+	cost := 0
+	for _, num := range arr {
+		cost = cost + (abs(pos-num)*(abs(pos-num)+1))/2
+	}
+	return cost
+}
+
 func getMaxPos(arr []int) int {
 	max := arr[0]
 	for _, i := range arr {
@@ -68,6 +76,26 @@ func main() {
 		right := getFuelCost(positions, mid+1)
 		if cost < left && cost < right {
 			fmt.Println("Part 1:", cost)
+			break
+		}
+		if cost < left {
+			minPos = mid + 1
+		} else if cost < right {
+			maxPos = mid - 1
+		} else {
+			panic("weird ordering")
+		}
+	}
+
+	// Use binary search to find the minimum.
+	minPos, maxPos = getMinPos(positions), getMaxPos(positions)
+	for minPos <= maxPos {
+		mid := (minPos + maxPos) / 2
+		cost := getFuelPart2(positions, mid)
+		left := getFuelPart2(positions, mid-1)
+		right := getFuelPart2(positions, mid+1)
+		if cost < left && cost < right {
+			fmt.Println("Part 2:", cost)
 			break
 		}
 		if cost < left {
