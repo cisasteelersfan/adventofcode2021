@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -21,10 +22,10 @@ func parseInput(s string) [][]int {
 	return arr
 }
 
-func getLowPoints(arr [][]int) []int {
+func getLowPoints(arr [][]int) [][]int {
 	directions := [][]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
 	rows, cols := len(arr), len(arr[0])
-	lowPoints := make([]int, 0)
+	lowPoints := make([][]int, 0)
 	for row, r := range arr {
 		for col := range r {
 			isLowest := true
@@ -38,17 +39,31 @@ func getLowPoints(arr [][]int) []int {
 				}
 			}
 			if isLowest {
-				lowPoints = append(lowPoints, arr[row][col])
+				lowPoints = append(lowPoints, []int{row, col})
 			}
 		}
 	}
 	return lowPoints
 }
 
-func sum(arr []int) int {
-	ans := 0
-	for _, x := range arr {
-		ans = ans + x
+type point struct {
+	row, col int
+}
+
+func getBasinSize(arr [][]int, row int, col int, seen map[point]bool) int {
+	directions := [][]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}}
+	rows, cols := len(arr), len(arr[0])
+	if seen[point{row, col}] {
+		return 0
+	}
+	seen[point{row, col}] = true
+	if row < 0 || row >= rows || col < 0 || col >= cols || arr[row][col] == 9 {
+		return 0
+	}
+	ans := 1
+	for i := range directions {
+		rowAdd, colAdd := directions[i][0], directions[i][1]
+		ans = ans + getBasinSize(arr, row+rowAdd, col+colAdd, seen)
 	}
 	return ans
 }
@@ -59,5 +74,15 @@ func main() {
 	dat, _ := ioutil.ReadFile("day9/" + *iPtr)
 	heightmap := parseInput(string(dat))
 	lowPoints := getLowPoints(heightmap)
-	fmt.Println("Part 1:", sum(lowPoints)+len(lowPoints))
+	sum := 0
+	for _, lp := range lowPoints {
+		sum = sum + heightmap[lp[0]][lp[1]]
+	}
+	fmt.Println("Part 1:", sum+len(lowPoints))
+	basinSizes := make([]int, len(lowPoints))
+	for i, lp := range lowPoints {
+		basinSizes[i] = getBasinSize(heightmap, lp[0], lp[1], make(map[point]bool))
+	}
+	sort.Ints(basinSizes)
+	fmt.Println("Part 2:", basinSizes[len(basinSizes)-1]*basinSizes[len(basinSizes)-2]*basinSizes[len(basinSizes)-3])
 }
