@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"sort"
 	"strings"
 )
 
@@ -70,7 +71,6 @@ func parseLine(l string) int {
 			break
 		}
 	}
-	fmt.Println("No illegal lines")
 	return 0
 }
 
@@ -88,14 +88,71 @@ func getPoints(s string) int {
 	panic("wrong char")
 }
 
+func getCompletionPoints(l string) int {
+	s := stack{}
+	stop := false
+	for _, char := range l {
+		if stop {
+			break
+		}
+		str := string(char)
+		switch str {
+		case "[":
+			fallthrough
+		case "(":
+			fallthrough
+		case "{":
+			fallthrough
+		case "<":
+			s.Push(str)
+			break
+		case ")":
+			fallthrough
+		case "]":
+			fallthrough
+		case "}":
+			fallthrough
+		case ">":
+			s.Pop()
+		}
+	}
+	score := 0
+	for i := range s {
+		l := s[len(s)-1-i]
+		switch l {
+		case "(":
+			score = score*5 + 1
+		case "[":
+			score = score*5 + 2
+		case "{":
+			score = score*5 + 3
+		case "<":
+			score = score*5 + 4
+		}
+	}
+	return score
+}
+
 func main() {
 	iPtr := flag.String("input", "input.txt", "Input filename to read the puzzle input from.")
 	flag.Parse()
 	dat, _ := ioutil.ReadFile("day10/" + *iPtr)
 	split := strings.Split(string(dat), "\n")
 	totalScore := 0
+	corruptedLines := make([]string, 0)
 	for _, line := range split {
-		totalScore = totalScore + parseLine(line)
+		score := parseLine(line)
+		totalScore = totalScore + score
+		if score == 0 {
+			corruptedLines = append(corruptedLines, line)
+		}
 	}
 	fmt.Println("Part 1:", totalScore)
+
+	completionPoints := make([]int, len(corruptedLines))
+	for i, l := range corruptedLines {
+		completionPoints[i] = getCompletionPoints(l)
+	}
+	sort.Ints(completionPoints)
+	fmt.Println("Part 2:", completionPoints[len(completionPoints)/2])
 }
